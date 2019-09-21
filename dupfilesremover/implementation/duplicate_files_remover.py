@@ -5,21 +5,24 @@ from collections import Counter, defaultdict, namedtuple
 
 DEFAULT_READ_FILE_BLOCKSIZE = 65536
 
-InitialRawInputData = namedtuple("InitialRawInputData", ["file_name", "file_size"])
-HashedFileData = namedtuple("InitialRawInputData", ["file_name", "file_size", "base_file_name", "hash"])
+InitialRawInputData = namedtuple("InitialRawInputData", ["initial_folder_index", "file_name", "file_size"])
+HashedFileData = namedtuple(
+    "HashedFileData",
+    ["initial_folder_index", "file_name", "file_size", "base_file_name", "hash"]
+)
 
 
 class DuplicateImagesRemover(object):
     def __init__(self, target_folders, recurse, logger, acceptable_extensions=None):
         self.logger = logger
-        self.target_folders = target_folders
-        self.recurse = recurse
-        self.acceptable_extensions = acceptable_extensions
+        self._target_folders = target_folders
+        self._recurse = recurse
+        self._acceptable_extensions = acceptable_extensions
 
     def remove_duplicate_images(self):
         raw_input_data = list()
-        for target_folder in self.target_folders:
-            raw_input_data.extend(self._gather_file_names(target_folder))
+        for folder_index, target_folder in enumerate(self._target_folders):
+            raw_input_data.extend(self._gather_file_names(folder_index, target_folder))
 
         self.logger.debug("raw_input_data:\n{}".format(raw_input_data))
 
@@ -29,6 +32,7 @@ class DuplicateImagesRemover(object):
         hashes = self._calculate_hashes(raw_input_data)
         self.logger.debug("hashes: {}".format(hashes))
 
+        self.logger.debug("removing unique hashes")
         for key in list(hashes.keys()):
             if len(hashes[key]) < 2:
                 del hashes[key]
@@ -38,38 +42,46 @@ class DuplicateImagesRemover(object):
             return
 
         self.logger.info("candidates hashes: {}".format(hashes))
-
         for key, value in hashes.items():
             base_names = [item.base_file_name for item in value]
             self.logger.info("want remove for hash '{}':\n{}".format(key, "\n".join(base_names)))
-
             self._remove_files_with_duplicate_hashes(key, value)
 
-    def _gather_file_names(self, folder_name):
+    def _gather_file_names(self, folder_index, folder_name):
         target_items = list()
         filenames = os.listdir(folder_name)
 
-        # self.logger.info("filenames: '{}'".format(filenames))
         for filename in filenames:
             abs_name = os.path.join(folder_name, filename)
             abs_name = os.path.abspath(abs_name)
 
             if os.path.isdir(abs_name):
-                if not self.recurse:
+                if not self._recurse:
                     continue
 
-                target_items.extend(self._gather_file_names(abs_name))
+                target_items.extend(self._gather_file_names(folder_index, abs_name))
                 continue
 
             if not self._is_matching_to_valid_extensions(filename):
                 self.logger.debug("'{}' not matching masks".format(filename))
                 continue
 
-            target_items.append(InitialRawInputData(abs_name, os.path.getsize(abs_name)))
+            target_items.append(
+                InitialRawInputData(
+                    initial_folder_index=folder_index,
+                    file_name=abs_name,
+                    file_size=os.path.getsize(abs_name)
+                )
+            )
 
         return target_items
 
     def _filter_for_non_unique_filesize(self, input_raw_data):
+        """
+        Removes items
+        :param input_raw_data:
+        :return:
+        """
         file_size_counter = Counter()
         for item in input_raw_data:
             file_size_counter.update([item.file_size])
@@ -91,23 +103,28 @@ class DuplicateImagesRemover(object):
         for item in input_raw_data:
             hash_value = self._hash_file(item.file_name)
 
-            hash_item = HashedFileData(item.file_name, item.file_size, os.path.basename(item.file_name), hash_value)
+            hash_item = HashedFileData(
+                initial_folder_index=item.initial_folder_index,
+                file_name=item.file_name,
+                file_size=item.file_size,
+                base_file_name=os.path.basename(item.file_name),
+                hash=hash_value
+            )
             hash_dict[hash_value].append(hash_item)
 
         return hash_dict
 
     def _remove_files_with_duplicate_hashes(self, hash, input_items):
         self.logger.debug("want remove files for hash '{}'".format(hash))
-        sort_lbd_func = (lambda x: len(x.base_file_name))
+        sort_lbd_func = (lambda item: (item.initial_folder_index, len(item.base_file_name)))
         sorder_items = sorted(input_items, key=sort_lbd_func, reverse=False)
 
-        self.logger.debug("sorder_items: {}".format(sorder_items))
-
         items_to_remove = sorder_items[1:]
-        self.logger.debug("items_to_remove: {}".format(items_to_remove))
         for item in items_to_remove:
             self.logger.info("removing file: '{}'".format(item.file_name))
             # os.unlink(item.file_name)
+
+        self.logger.debug("will keep item: '{}'".format(sorder_items[0].file_name))
 
     @staticmethod
     def _hash_file(file_name):
@@ -121,10 +138,10 @@ class DuplicateImagesRemover(object):
         return hasher.hexdigest()
 
     def _is_matching_to_valid_extensions(self, filename):
-        if not self.acceptable_extensions:
+        if not self._acceptable_extensions:
             return True
 
-        for possible_extension in self.acceptable_extensions:
+        for possible_extension in self._acceptable_extensions:
             if fnmatch.fnmatch(filename, possible_extension):
                 return True
 

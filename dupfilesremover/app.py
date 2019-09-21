@@ -23,7 +23,7 @@ def get_cli_args():
     parser.add_argument("--recurse", "-r", action="store_true", default=False)
     parser.add_argument("--version", "-v", action="version", version="%(prog)s {}".format(__version__))
     parser.add_argument("--masks_set_name", "-m", action="store")
-    parser.add_argument("--config", "-c", type=argparse.FileType('r'))
+    parser.add_argument("--config", "-c", type=argparse.FileType("r"))
     parser.add_argument("directories", nargs="*", type=dir_path)
 
     return parser.parse_args()
