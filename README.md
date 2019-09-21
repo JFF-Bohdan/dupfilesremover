@@ -1,2 +1,2 @@
-# dupimgsremover
-Remover for duplicate image files
+# dupfilesremover
+Remover for duplicate files

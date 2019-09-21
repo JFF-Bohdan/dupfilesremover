@@ -1,0 +1,131 @@
+import fnmatch
+import hashlib
+import os
+from collections import Counter, defaultdict, namedtuple
+
+DEFAULT_READ_FILE_BLOCKSIZE = 65536
+
+InitialRawInputData = namedtuple("InitialRawInputData", ["file_name", "file_size"])
+HashedFileData = namedtuple("InitialRawInputData", ["file_name", "file_size", "base_file_name", "hash"])
+
+
+class DuplicateImagesRemover(object):
+    def __init__(self, target_folders, recurse, logger, acceptable_extensions=None):
+        self.logger = logger
+        self.target_folders = target_folders
+        self.recurse = recurse
+        self.acceptable_extensions = acceptable_extensions
+
+    def remove_duplicate_images(self):
+        raw_input_data = list()
+        for target_folder in self.target_folders:
+            raw_input_data.extend(self._gather_file_names(target_folder))
+
+        self.logger.debug("raw_input_data:\n{}".format(raw_input_data))
+
+        raw_input_data = self._filter_for_non_unique_filesize(raw_input_data)
+        self.logger.debug("raw_input_data (filtered):\n{}".format(raw_input_data))
+
+        hashes = self._calculate_hashes(raw_input_data)
+        self.logger.debug("hashes: {}".format(hashes))
+
+        for key in list(hashes.keys()):
+            if len(hashes[key]) < 2:
+                del hashes[key]
+
+        if not hashes:
+            self.logger.info("nothing to remove")
+            return
+
+        self.logger.info("candidates hashes: {}".format(hashes))
+
+        for key, value in hashes.items():
+            base_names = [item.base_file_name for item in value]
+            self.logger.info("want remove for hash '{}':\n{}".format(key, "\n".join(base_names)))
+
+            self._remove_files_with_duplicate_hashes(key, value)
+
+    def _gather_file_names(self, folder_name):
+        target_items = list()
+        filenames = os.listdir(folder_name)
+
+        # self.logger.info("filenames: '{}'".format(filenames))
+        for filename in filenames:
+            abs_name = os.path.join(folder_name, filename)
+            abs_name = os.path.abspath(abs_name)
+
+            if os.path.isdir(abs_name):
+                if not self.recurse:
+                    continue
+
+                target_items.extend(self._gather_file_names(abs_name))
+                continue
+
+            if not self._is_matching_to_valid_extensions(filename):
+                self.logger.debug("'{}' not matching masks".format(filename))
+                continue
+
+            target_items.append(InitialRawInputData(abs_name, os.path.getsize(abs_name)))
+
+        return target_items
+
+    def _filter_for_non_unique_filesize(self, input_raw_data):
+        file_size_counter = Counter()
+        for item in input_raw_data:
+            file_size_counter.update([item.file_size])
+
+        self.logger.debug("file_size_counter: {}".format(file_size_counter))
+
+        ret = list()
+        for item in input_raw_data:
+            if file_size_counter[item.file_size] < 2:
+                continue
+
+            ret.append(item)
+
+        return ret
+
+    def _calculate_hashes(self, input_raw_data):
+        hash_dict = defaultdict(list)
+
+        for item in input_raw_data:
+            hash_value = self._hash_file(item.file_name)
+
+            hash_item = HashedFileData(item.file_name, item.file_size, os.path.basename(item.file_name), hash_value)
+            hash_dict[hash_value].append(hash_item)
+
+        return hash_dict
+
+    def _remove_files_with_duplicate_hashes(self, hash, input_items):
+        self.logger.debug("want remove files for hash '{}'".format(hash))
+        sort_lbd_func = (lambda x: len(x.base_file_name))
+        sorder_items = sorted(input_items, key=sort_lbd_func, reverse=False)
+
+        self.logger.debug("sorder_items: {}".format(sorder_items))
+
+        items_to_remove = sorder_items[1:]
+        self.logger.debug("items_to_remove: {}".format(items_to_remove))
+        for item in items_to_remove:
+            self.logger.info("removing file: '{}'".format(item.file_name))
+            # os.unlink(item.file_name)
+
+    @staticmethod
+    def _hash_file(file_name):
+        hasher = hashlib.sha1()
+        with open(file_name, "rb") as afile:
+            buf = afile.read(DEFAULT_READ_FILE_BLOCKSIZE)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = afile.read(DEFAULT_READ_FILE_BLOCKSIZE)
+
+        return hasher.hexdigest()
+
+    def _is_matching_to_valid_extensions(self, filename):
+        if not self.acceptable_extensions:
+            return True
+
+        for possible_extension in self.acceptable_extensions:
+            if fnmatch.fnmatch(filename, possible_extension):
+                return True
+
+        return False
