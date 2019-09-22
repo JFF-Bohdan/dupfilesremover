@@ -9,10 +9,7 @@ from loguru import logger
 if __name__ == "__main__":
     tm_begin = datetime.datetime.utcnow()
     logger.remove()
-    logger.add(sys.stderr, format="{time} {level} {message}", level="DEBUG")
-
-    logger.debug("DEBUG")
-    logger.warning("WARNING")
+    logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
 
     app = DuplicateImagesRemoverApplication(logger)
     app.run()

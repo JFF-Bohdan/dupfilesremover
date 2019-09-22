@@ -22,8 +22,9 @@ def get_cli_args():
 
     parser.add_argument("--recurse", "-r", action="store_true", default=False)
     parser.add_argument("--version", "-v", action="version", version="%(prog)s {}".format(__version__))
-    parser.add_argument("--masks_set_name", "-m", action="store")
-    parser.add_argument("--config", "-c", type=argparse.FileType("r"))
+    parser.add_argument("--masks", "-m", action="store")
+    parser.add_argument("--masks_set_name", "-s", action="store")
+    parser.add_argument("--config", "-c", action="store")
     parser.add_argument("directories", nargs="*", type=dir_path)
 
     return parser.parse_args()
@@ -38,12 +39,15 @@ class DuplicateImagesRemoverApplication(object):
         self.logger.info("target folders: {}".format(args.directories))
 
         acceptable_extensions = None
-        if args.masks_set_name:
-            acceptable_extensions = self.get_acceptable_extensions(args)
+        if args.masks:
+            acceptable_extensions = self._split_masks_from_string(args.masks)
+        elif args.masks_set_name:
+            acceptable_extensions = self._get_acceptable_extensions_from_masks_set_name(args)
             if acceptable_extensions is None:
                 return
 
-            self.logger.debug("acceptable_extensions: {}".format(acceptable_extensions))
+        if acceptable_extensions:
+            self.logger.info("acceptable_extensions: {}".format(acceptable_extensions))
 
         worker = DuplicateImagesRemover(
             logger=self.logger,
@@ -53,8 +57,10 @@ class DuplicateImagesRemoverApplication(object):
         )
         worker.remove_duplicate_images()
 
-    def get_acceptable_extensions(self, args):
+    def _get_acceptable_extensions_from_masks_set_name(self, args):
         config_file_name = args.config
+        self.logger.debug("config_file_name: '{}'".format(config_file_name))
+
         if not config_file_name:
             config_file_name = DEFAULT_CONFIG_RELATIVE_NAME
             src_path = os.path.abspath(os.path.dirname(__file__))
@@ -73,13 +79,28 @@ class DuplicateImagesRemoverApplication(object):
             self.logger.error("configuration file does't exists, file name: '{}'".format(config_file_name))
             return None
 
-        return self.read_masks_for_name_from_config_file(config_file_name, args.masks_set_name)
+        return self._read_masks_for_name_from_config_file(config_file_name, args.masks_set_name)
 
-    @staticmethod
-    def read_masks_for_name_from_config_file(config_file_name, named_mask_name, encoding="utf-8"):
+    def _read_masks_for_name_from_config_file(self, config_file_name, named_mask_name, encoding="utf-8"):
         config = configparser.RawConfigParser()
         config.read(config_file_name, encoding)
-        mask_extensions = config.get(NAMED_FILE_MASKS_GROUP_NAME, named_mask_name)
 
-        mask_extensions = str(mask_extensions).strip().split(",")
-        return [str(item).strip() for item in mask_extensions if str(item).strip()]
+        if not config.has_option(NAMED_FILE_MASKS_GROUP_NAME, named_mask_name):
+            self.logger.warning(
+                "there is no option '{}' in section '{}' of configuration file in '{}'".format(
+                    named_mask_name,
+                    NAMED_FILE_MASKS_GROUP_NAME,
+                    config_file_name
+                )
+            )
+            return None
+
+        mask_extensions = config.get(NAMED_FILE_MASKS_GROUP_NAME, named_mask_name)
+        return DuplicateImagesRemoverApplication._split_masks_from_string(mask_extensions)
+
+    @staticmethod
+    def _split_masks_from_string(value):
+        value = str(value).strip().split(",")
+        res = [str(item).strip() for item in value if str(item).strip()]
+
+        return list(set(res))

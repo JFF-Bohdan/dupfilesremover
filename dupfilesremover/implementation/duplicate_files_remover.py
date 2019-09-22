@@ -41,10 +41,10 @@ class DuplicateImagesRemover(object):
             self.logger.info("nothing to remove")
             return
 
-        self.logger.info("candidates hashes: {}".format(hashes))
+        self.logger.debug("candidates hashes: {}".format(hashes))
         for key, value in hashes.items():
             base_names = [item.base_file_name for item in value]
-            self.logger.info("want remove for hash '{}':\n{}".format(key, "\n".join(base_names)))
+            self.logger.info("want remove for hash '{}':\n\t{}".format(key, "\n\t".join(base_names)))
             self._remove_files_with_duplicate_hashes(key, value)
 
     def _gather_file_names(self, folder_index, folder_name):
@@ -115,14 +115,14 @@ class DuplicateImagesRemover(object):
         return hash_dict
 
     def _remove_files_with_duplicate_hashes(self, hash, input_items):
-        self.logger.debug("want remove files for hash '{}'".format(hash))
-        sort_lbd_func = (lambda item: (item.initial_folder_index, len(item.base_file_name)))
+        self.logger.debug("want remove duplicate files for hash '{}'".format(hash))
+        sort_lbd_func = (lambda x: (x.initial_folder_index, len(x.base_file_name), len(x.file_name)))
         sorder_items = sorted(input_items, key=sort_lbd_func, reverse=False)
 
         items_to_remove = sorder_items[1:]
         for item in items_to_remove:
             self.logger.info("removing file: '{}'".format(item.file_name))
-            # os.unlink(item.file_name)
+            os.unlink(item.file_name)
 
         self.logger.debug("will keep item: '{}'".format(sorder_items[0].file_name))
 
