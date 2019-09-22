@@ -8,6 +8,7 @@ PYFLAKE8 = $(PYTHON) -m flake8
 TESTDIR = tests
 MODULE_NAME = dupfilesremover
 TMP_PATH = .\tmp
+TWINE = twine
 
 environ: clean requirements.txt requirements-dev.txt
 	virtualenv $(ENV)
@@ -34,13 +35,15 @@ tests:
 	$(PYTEST) $(TESTDIR) -vv
 
 .PHONY: validate_package
-validate_package: tests
+validate_package: lint tests
 	$(PYTHON) setup.py test
 	$(PYTHON) setup.py check
 
 .PHONY: build_package
-build_package: tests validate_package
+build_package: validate_package
+	if exist dist rd dist /q /s
 	$(PYTHON) setup.py sdist bdist_wheel
+	$(TWINE) check dist/*
 
 .PHONY: coverage
 coverage:
@@ -50,7 +53,7 @@ coverage:
 .PHONY: lint
 lint:
 	$(PYFLAKE8)
-	
+
 .PHONY: flake8
 flake8:
 	$(PYFLAKE8)
@@ -62,11 +65,15 @@ clean:
 	if exist htmlcov rd htmlcov /q /s
 	if exist log rd log /q /s
 	if exist $(TMP_PATH) rd $(TMP_PATH) /q /s
+	if exist .cache rd .cache /q /s
+	if exist .eggs rd .eggs /q /s
+	if exist build rd build /q /s
+	if exist $(MODULE_NAME).egg-info rd $(MODULE_NAME).egg-info /q /s
 	del /S *.pyc
 
 .PHONY: deploy
-deploy:
-	$(PYTHON) setup.py sdist upload
+deploy: build_package
+	$(TWINE) upload dist/*
 
 .PHONY: local_install
 local_install:
