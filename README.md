@@ -84,5 +84,5 @@ images =
     *.jpg,
     *.jp2,
     *.j2k,
-    *.jpf,
+    *.jpf
 ```
