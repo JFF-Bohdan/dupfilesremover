@@ -1,9 +1,9 @@
 import datetime
 import sys
 
-from dupfilesremover.app import DuplicateImagesRemoverApplication
-
 from loguru import logger
+
+from .app import DuplicateImagesRemoverApplication
 
 
 if __name__ == "__main__":
