@@ -5,6 +5,29 @@ Tool for duplicate files removing.
 Removes duplicate files existing with same or different name in on one
 or more folder(s)
 
+# How to install
+
+You can install from PyPi just by using:
+
+```
+pip install dupfilesremover
+```
+
+Or you can install from GitHub by using pip:
+
+```
+pip install git+https://github.com/JFF-Bohdan/dupfilesremover
+```
+
+Or just clone and install from source code:
+
+```
+git clone https://github.com/JFF-Bohdan/dupfilesremover.git
+cd dupfilesremover
+python setup.py install
+```
+
+
 # Use case
 
 For example, let's assume that same image available (with different names) in:
