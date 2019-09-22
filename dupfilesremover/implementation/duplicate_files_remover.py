@@ -124,7 +124,7 @@ class DuplicateImagesRemover(object):
             self.logger.info("removing file: '{}'".format(item.file_name))
             os.unlink(item.file_name)
 
-        self.logger.debug("will keep item: '{}'".format(sorder_items[0].file_name))
+        self.logger.info("will keep item: '{}'".format(sorder_items[0].file_name))
 
     @staticmethod
     def _hash_file(file_name):
