@@ -49,7 +49,7 @@ class DuplicateImagesRemover(object):
 
     def _gather_file_names(self, folder_index, folder_name):
         target_items = list()
-        filenames = os.listdir(folder_name)
+        filenames = sorted(os.listdir(folder_name))
 
         for filename in filenames:
             abs_name = os.path.join(folder_name, filename)
