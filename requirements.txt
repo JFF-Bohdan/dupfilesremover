@@ -3,3 +3,4 @@ terminaltables==3.1.10
 tqdm==4.67.1
 ConfigArgParse==1.7
 humanize==4.11.0
+first==2.0.2

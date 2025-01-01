@@ -1,6 +1,10 @@
 import collections
 import os
 import typing
+import tqdm
+
+from loguru import logger
+from dupfilesremover import tqdm_to_logger
 
 from dupfilesremover import data_types, exceptions, file_system
 
@@ -16,7 +20,8 @@ def validate_folders(folders: list[str]) -> None:
 
 
 def normalize_folders(folders: list[str]) -> list[str]:
-    return [os.path.abspath(os.path.normpath(path)).replace("\\", "/") for path in folders]
+    # replace("\\", "/")
+    return [os.path.abspath(os.path.normpath(path)) for path in folders]
 
 
 def remove_files_with_unique_size(
@@ -48,11 +53,25 @@ def remove_files_with_unique_size(
 
 
 def compute_hashes_for_files(
-        files: typing.Iterable[data_types.FileInfo]
+    files: typing.Iterable[data_types.FileInfo],
+    perf_counters: data_types.PerfCounters,
 ) -> typing.Generator[data_types.FileInfo, None, None]:
-    for file in files:
+    files = list(files)
+
+    tqdm_out = tqdm_to_logger.TqdmToLogger(logger)
+    generator = tqdm.tqdm(
+        files,
+        file=tqdm_out,
+        desc="Files processed",
+        mininterval=10,
+        maxinterval=30
+    )
+
+    for file in generator:
+        perf_counters.hashed_data_size += file.file_size
         yield data_types.FileInfo(
             file_name=file.file_name,
             file_size=file.file_size,
-            hast=file_system.hash_file(file.file_name)
+            hash=file_system.hash_file(file.file_name),
+            creation_timestamp=file.creation_timestamp,
         )
