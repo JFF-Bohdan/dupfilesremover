@@ -64,7 +64,7 @@ setup(
 
     entry_points={
         "console_scripts": [
-            "dupfilesremover=dupfilesremover.command_line.dupfilesremover:main"
+            "dupfilesremover=dupfilesremover.app:main"
         ],
     }
 )
