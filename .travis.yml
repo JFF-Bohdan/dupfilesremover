@@ -1,26 +1,27 @@
 dist: xenial
 language: python
 python:
-- 3.5
-- 3.6
-- 3.7
+  - 3.5
+  - 3.6
+  - 3.7
 install:
-- pip install -r requirements-dev.txt
-- pip install coveralls
+  - pip install -r requirements-dev.txt
+  - pip install coveralls
 script:
-- python -m flake8
-- py.test tests -v --cov=dupfilesremover
-- python setup.py check
-- python setup.py test
+  - python -m flake8
+  - py.test tests -v --cov=dupfilesremover
+  - python setup.py check
+  - python setup.py test
 after_success:
-- coveralls --verbose
+  - coveralls --verbose
 deploy:
   provider: pypi
   user: kittyhawk
   distributions: sdist bdist_wheel
   password:
-    secure: Cqq2yg9Ytba+h0hQvGL9T9uHKSTUxEepIa2RRyX0IxusUtfNAzlRpT7BNhAwcWfAd6g0c5DY7rpxmHf196dRLhi3hAN2kUx613+ax7inn4mGemJw/M5qWTuRcVlXBRge7syNe3y3Ij7w85hy+fgh9J9r4nDNl6lg4OxsjG1lQboiIvBwJpAjQz3S+MNMBMFoia/Hi67ISi8XP9JN2lGVLFRVIcjqdFlatDpmSg5wJoHpKBtcUoecClu+wywekCaJDN4DptqbcJhxAYiKc/0VX0wHbKGojPeAJh/KDNQuOGeuFg1MY5zIISM8wfGV1IWH1uyuidxG4sT6N8jUPyqG+ENReesTULkegZQvUIj56fELnUz0EuTf4IrgsdGAJOGBnKDH56MSacZzuBi7l83yTpVzbCO0UyAq3KsQVvOfcitSmwsQ+SUcON99FVFKsrbLx6W5XOS4P7LWa3LKFDrWuFzTN+hI6cfuxv1zlQcmT+RDcs7Zc5eCaRWgu0sbSnR6twjo/gUY3li9y/tm7VD6u7DB2f3RTnALuIBRV3hZV98jfoYnXMP33lxeg+nn028cQGAhZdb3m90oBkv+AGqYXQNg8vPZ6lkIW2mB2/CuBQdJ/aq3N2kxk6i9e72Xd0crejQk97QagFNgzkxHbpq4FQkRJi7IG5p39ADsuS4cWUU=
-  on:
+    secure: >-
+      Cqq2yg9Ytba+h0hQvGL9T9uHKSTUxEepIa2RRyX0IxusUtfNAzlRpT7BNhAwcWfAd6g0c5DY7rpxmHf196dRLhi3hAN2kUx613+ax7inn4mGemJw/M5qWTuRcVlXBRge7syNe3y3Ij7w85hy+fgh9J9r4nDNl6lg4OxsjG1lQboiIvBwJpAjQz3S+MNMBMFoia/Hi67ISi8XP9JN2lGVLFRVIcjqdFlatDpmSg5wJoHpKBtcUoecClu+wywekCaJDN4DptqbcJhxAYiKc/0VX0wHbKGojPeAJh/KDNQuOGeuFg1MY5zIISM8wfGV1IWH1uyuidxG4sT6N8jUPyqG+ENReesTULkegZQvUIj56fELnUz0EuTf4IrgsdGAJOGBnKDH56MSacZzuBi7l83yTpVzbCO0UyAq3KsQVvOfcitSmwsQ+SUcON99FVFKsrbLx6W5XOS4P7LWa3LKFDrWuFzTN+hI6cfuxv1zlQcmT+RDcs7Zc5eCaRWgu0sbSnR6twjo/gUY3li9y/tm7VD6u7DB2f3RTnALuIBRV3hZV98jfoYnXMP33lxeg+nn028cQGAhZdb3m90oBkv+AGqYXQNg8vPZ6lkIW2mB2/CuBQdJ/aq3N2kxk6i9e72Xd0crejQk97QagFNgzkxHbpq4FQkRJi7IG5p39ADsuS4cWUU=
+  'on':
     tags: false
     branch: master
     condition: $TRAVIS_PYTHON_VERSION = "3.6"

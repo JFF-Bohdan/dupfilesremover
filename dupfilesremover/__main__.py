@@ -15,4 +15,4 @@ if __name__ == "__main__":
     app.run()
 
     tm_end = datetime.datetime.utcnow()
-    logger.info("app finished @ {}".format(tm_end - tm_begin))
+    logger.info("App finished @ {}".format(tm_end - tm_begin))
