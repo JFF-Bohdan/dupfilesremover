@@ -1,3 +1,4 @@
 loguru==0.7.3
 terminaltables==3.1.10
 tqdm==4.67.1
+configargparser==0.0.2

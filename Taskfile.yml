@@ -1,0 +1,81 @@
+version: '3'
+
+env:  
+    ENV: venv
+    GLOBAL_PYTHON: python
+    PYTHON: venv/scripts/python
+    PIP: venv/scripts/pip    
+    PYFLAKE8: $(PYTHON) -m flake8
+    TESTDIR: tests
+    MODULE_NAME: dupfilesremover
+    TESTS_VERBOSITY: -vvv
+
+tasks:
+  environ:
+    desc: Creates virtual environment and install all packages required for development
+    cmds:
+      - task: clean
+      - virtualenv $ENV
+      - $PIP install -r requirements-dev.txt
+      - $PYTHON -m pip install --upgrade pip
+      - echo "Initialization complete"
+
+  tests:
+    desc: Runs all unit tets
+    cmds:
+      - $PYTHON -m pytest $TESTDIR $TESTS_VERBOSITY
+
+  flake8:
+    desc: Runs Flake8 (linter)
+    cmds:
+      - $PYTHON -m flake8
+
+  coverage:
+    desc: Runs unit tests and calculates coverage
+    cmds:
+      - $PYTHON -m pytest $TESTDIR $TESTS_VERBOSITY --cov=$MODULE_NAME
+      - $PYTHON -m coverage html
+
+  mypy:
+    desc: Runs MyPy tests
+    cmds:
+      - $PYTHON -m mypy $MODULE_NAME
+
+  validate-package:
+    desc: Validates that package can be created
+    cmds:
+      - $PYTHON setup.py check
+
+  all-tests:
+    desc: Runs all possible tests and checks
+    deps: [flake8, mypy, coverage, validate-package]
+    silent: true
+    cmds:    
+      - echo "All tests passed! Congratulations"
+      - echo "      I\                "
+      - echo "      I \               "
+      - echo "      I  \              "
+      - echo "      I*--\             "
+      - echo "      I    \            "
+      - echo "      I     \           "
+      - echo "      I______\          "
+      - echo " _____I__O______        "
+      - echo "  \     ( )     b  ^  ^ "
+      - echo "^^^^^^^^^^^^^^^^^    ^  "
+
+  build-package:
+    desc: Runs tests and other checks and then builds package
+    deps: [flake8, mypy, coverage, validate-package]
+    cmds:
+      - $PYTHON setup.py sdist
+      - echo "Build successfull"
+      
+  local-install:
+    desc: Installs package
+    cmds:
+      - $PIP install .
+
+  develop-install:
+    desc: Installs package in development mode (when source can be edited and changes accessed without reinstall
+    cmds:
+      - $PIP install -e .

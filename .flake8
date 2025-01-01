@@ -2,7 +2,7 @@
 exclude =
 	.git,
 	.idea,
-	env,
+	venv,
 	.eggs,
 	__pycache__,
 	log,

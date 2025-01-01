@@ -1,57 +1,70 @@
-from dupfilesremover import __version__
+import codecs
+import copy
+import os
+from importlib.machinery import SourceFileLoader
 
 from setuptools import find_packages, setup
 
+module_name = "dupfilesremover"
 
-try:  # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
-    from pip.req import parse_requirements
-
-
-PACKAGE_NAME = "dupfilesremover"
-
-README_FILE = "README.md"
-install_reqs = parse_requirements("requirements.txt", session=False)
-
-requirements = [str(ir.req) for ir in install_reqs if ir and ir.req and str(ir.req).strip()]
-hyphen_package_name = PACKAGE_NAME.replace("_", "-")
-LONG_DESCTIPTION = "Please read https://github.com/JFF-Bohdan/dupfilesremover/blob/master/README.md for information"
+# Probably module is not yet installed (or we have another version installed),
+# that's why it's better to load __init__.py with help of machinery
+module = SourceFileLoader(
+    module_name, os.path.join(module_name, "__init__.py")
+).load_module()
 
 
-def read_file_content(file_name):
-    with open(file_name) as f:
-        return f.read()
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    lineiter = (line.strip() for line in open(filename))
+
+    res = []
+    for line in lineiter:
+        if line.startswith("#"):
+            continue
+
+        split_data = [str(item) for item in line.split(" ") if str(item).strip()]
+        if not split_data:
+            continue
+
+        if split_data[0] == "-r":
+            continue
+
+        res.append(line)
+
+    return res
 
 
-if __name__ == "__main__":
-    packages_to_remove = ["tests"]
-    packages = find_packages()
+def load_file_content(file_name, encoding="utf-8") -> str:
+    with codecs.open(file_name, "r", encoding=encoding) as input_file:
+        return input_file.read()
 
-    for item in packages_to_remove:
-        if item in packages:
-            packages.remove(item)
 
-    setup(
-        name=PACKAGE_NAME,
-        packages=packages,
-        version=__version__,
-        description="Module to support VRC-T70 hardware",
-        long_description=LONG_DESCTIPTION,
-        long_description_content_type="text/x-rst",
-        author="Bohdan Danishevsky",
-        author_email="dbn@aminis.com.ua",
-        url="https://github.com/JFF-Bohdan/dupfilesremover",
-        keywords=["duplicates remover", "duplicate images remover", "dups remover"],
-        setup_requires=["pytest-runner"],
-        tests_require=["pytest"],
-        install_requires=requirements,
-        classifiers=[],
-        license="MIT",
-        zip_safe=False,
-        entry_points={
-            "console_scripts": [
-                "dupfilesremover=dupfilesremover.command_line.dupfilesremover:main"
-            ],
-        }
-    )
+requirements = parse_requirements("requirements.txt")
+
+extra_requirements = copy.deepcopy(requirements)
+extra_requirements.extend(parse_requirements("requirements-dev.txt"))
+
+
+setup(
+    name=module_name,
+    version=module.__version__,
+    author=module.__author__,
+    license=load_file_content("LICENSE"),
+    description="Duplicate files remover",
+    long_description=open("README.md").read(),
+    keywords=["duplicates file remover", "duplicate images remover", "dups remover"],
+    url="https://github.com/JFF-Bohdan/dupfilesremover",
+    platforms="all",
+    python_requires=">=3.6",
+    packages=find_packages(exclude=["tests"]),
+    install_requires=requirements,
+    extras_require={"dev": extra_requirements},
+    include_package_data=True,
+
+    entry_points={
+        "console_scripts": [
+            "dupfilesremover=dupfilesremover.command_line.dupfilesremover:main"
+        ],
+    }
+)
