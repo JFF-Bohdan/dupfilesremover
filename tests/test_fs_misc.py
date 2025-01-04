@@ -19,5 +19,3 @@ def test_can_filter_for_images():
     expected_result = ["some-image.jpeg", "some-image.jpg"]
     result = list(file_system.filter_files_by_masks(files, consts.IMAGES))
     assert result == expected_result
-
-
