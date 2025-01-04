@@ -17,3 +17,5 @@ class PerfCounters:
     files_skipped_due_to_unique_size: int = 0
     hashed_data_size: int = 0
     unique_files_count: int = 0
+    removed_files_count: int = 0
+    reclaimed_space: int = 0

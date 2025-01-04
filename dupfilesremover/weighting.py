@@ -32,7 +32,7 @@ def calculate_votes_for_files(
         if not matched_prefix_info:
             raise RuntimeError(f"Can't find prefix sub-folder for file {file.file_name}")
 
-        logger.info(f"For file {file.file_name} prefix is {matched_prefix_info}")
+        logger.debug(f"For file {file.file_name} prefix is {matched_prefix_info}")
 
         folder_prefix = matched_prefix_info[0]
         votes = (matched_prefix_info[1], len(file.file_name), file.creation_timestamp)

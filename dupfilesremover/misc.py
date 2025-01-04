@@ -1,12 +1,12 @@
 import collections
 import os
 import typing
-import tqdm
+
+from dupfilesremover import data_types, exceptions, file_system, tqdm_to_logger
 
 from loguru import logger
-from dupfilesremover import tqdm_to_logger
 
-from dupfilesremover import data_types, exceptions, file_system
+import tqdm
 
 
 def is_folder_exists(path: str) -> bool:
@@ -56,6 +56,8 @@ def compute_hashes_for_files(
     files: typing.Iterable[data_types.FileInfo],
     perf_counters: data_types.PerfCounters,
 ) -> typing.Generator[data_types.FileInfo, None, None]:
+    logger.info("Computing hashes...")
+    # We need to materialize list to be able to show progress bar
     files = list(files)
 
     tqdm_out = tqdm_to_logger.TqdmToLogger(logger)

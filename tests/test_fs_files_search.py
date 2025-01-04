@@ -81,7 +81,7 @@ def make_test_structure(root_folder: pathlib.Path) -> None:
 
 
 def test_supports_non_recursive_search(tmp_path, mocker):
-    mocker.patch("dupfilesremover.file_system.creation_timestamp", return_value=0)
+    mocker.patch("dupfilesremover.file_system.get_file_creation_timestamp", return_value=0)
     make_test_structure(tmp_path)
 
     expected_results = {
@@ -125,7 +125,7 @@ def test_supports_non_recursive_search(tmp_path, mocker):
 
 
 def test_supports_recursive_search(tmp_path, mocker):
-    mocker.patch("dupfilesremover.file_system.creation_timestamp", return_value=0)
+    mocker.patch("dupfilesremover.file_system.get_file_creation_timestamp", return_value=0)
     make_test_structure(tmp_path)
 
     expected_results = {
