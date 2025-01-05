@@ -2,11 +2,15 @@ import collections
 import os
 import typing
 
-from dupfilesremover import data_types, exceptions, file_system, tqdm_to_logger
+from dupfilesremover import consts, data_types, exceptions, file_system, tqdm_to_logger
 
 from loguru import logger
 
 import tqdm
+
+
+def is_mask_set_supported(mask_set_name: str) -> bool:
+    return mask_set_name in consts.SUPPORTED_MASKS_SETS
 
 
 def is_folder_exists(path: str) -> bool:
@@ -77,3 +81,41 @@ def compute_hashes_for_files(
             hash=file_system.hash_file(file.file_name),
             creation_timestamp=file.creation_timestamp,
         )
+
+
+def group_files_by_hash(
+        files: typing.Iterable[data_types.FileInfo]
+) -> collections.defaultdict[str, list[data_types.FileInfo]]:
+    """
+    Groups files by hash. Output will be a dictionary where key is a hash
+    and value is a list of files with such hash
+    """
+    result: collections.defaultdict[str, list[data_types.FileInfo]] = collections.defaultdict(list)
+    for file in files:
+        result[file.hash].append(file)
+
+    return result
+
+
+def filter_out_unique_files(
+        hash_to_files: collections.defaultdict[str, list[data_types.FileInfo]],
+        perf_counters: data_types.PerfCounters,
+) -> dict[str, list[data_types.FileInfo]]:
+    """
+    Removes files with unique hash.
+
+    Input is a dictionary where key is a hash and value is a list of files with a such hash.
+    As a result, output will contain only such hashes where more than one file has such hash.
+    """
+    result: dict[str, list[data_types.FileInfo]] = {}
+
+    keys = list(hash_to_files.keys())
+    for key in keys:
+        if len(hash_to_files[key]) == 1:
+            logger.debug(f"Hash {key} contains only one file {hash_to_files[key][0]}, skipping")
+            perf_counters.files_skipped_due_to_unique_hash += 1
+            continue
+
+        result[key] = hash_to_files[key]
+
+    return result

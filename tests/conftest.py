@@ -1,8 +1,8 @@
 import pathlib
 
-import pytest
+from consts import TEST_FILES, TEST_FOLDERS
 
-from consts import TEST_FOLDERS, TEST_FILES
+import pytest
 
 
 @pytest.fixture

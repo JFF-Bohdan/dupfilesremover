@@ -56,3 +56,7 @@ IMAGES = [
     "*.xcf", 
     "*.pdn",
 ]
+
+SUPPORTED_MASKS_SETS = {
+    "images": IMAGES
+}

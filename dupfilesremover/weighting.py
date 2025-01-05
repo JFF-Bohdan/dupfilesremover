@@ -1,20 +1,14 @@
-import first
-# import collections
-
-from loguru import logger
+import pathlib
 
 from dupfilesremover import data_types
+
+import first
+
+from loguru import logger
 
 
 def weight_folders(folders: list[str]) -> dict[str, int]:
     return {path: index for index, path in enumerate(folders)}
-    # result = {}
-    # folders_count = len(folders)
-    # for index, path in enumerate(folders):
-        # result[path] = folders_count - index
-        # result[path] = index
-
-    # return result
 
 
 def calculate_votes_for_files(
@@ -23,10 +17,12 @@ def calculate_votes_for_files(
 ) -> list[data_types.FileInfo]:
     result = []
 
+    weighted_folders = {pathlib.Path(key): value for key, value in weighted_folders.items()}
     for file in files:
+        path_object = pathlib.Path(file.file_name)
         matched_prefix_info = first.first(
             weighted_folders.items(),
-            key=lambda weight_data: file.file_name.startswith(weight_data[0])
+            key=lambda weight_data: weight_data[0] in path_object.parents
         )
 
         if not matched_prefix_info:

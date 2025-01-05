@@ -12,7 +12,7 @@ from loguru import logger
 
 from dupfilesremover import command_line_parser
 
-from dupfilesremover import misc, exceptions, file_system, data_types, weighting
+from dupfilesremover import consts, misc, exceptions, file_system, data_types, weighting
 
 
 import dataclasses
@@ -22,44 +22,12 @@ import typing
 import itertools
 
 
-
-
-
-def group_files_by_hash(
-        files: typing.Iterable[data_types.FileInfo]
-) -> collections.defaultdict[str, list[data_types.FileInfo]]:
-    result: collections.defaultdict[str, list[data_types.FileInfo]] = collections.defaultdict(list)
-    for file in files:
-        result[file.hash].append(file)
-
-    return result
-
-
-def filter_out_unique_files(
-        hash_to_files: collections.defaultdict[str, list[data_types.FileInfo]],
-        perf_counters: data_types.PerfCounters,
-) -> dict[str, list[data_types.FileInfo]]:
-    result: dict[str, list[data_types.FileInfo]] = {}
-
-    keys = list(hash_to_files.keys())
-    for key in keys:
-        if len(hash_to_files[key]) == 1:
-            logger.debug(f"Hash {key} contains only one file {hash_to_files[key][0]}, skipping")
-            del hash_to_files[key]
-            perf_counters.unique_files_count += 1
-            continue
-
-        result[key] = hash_to_files[key]
-
-    return result
-
-
 def main():
     timestamp_begin = time.monotonic()
     perf_counters = data_types.PerfCounters()
 
     logger.remove()
-    logger.add(sys.stdout, format="{time} {level} {message}", level="INFO")
+    logger.add(sys.stdout, format="{time} {level} {message}", level="DEBUG")
 
     parser = command_line_parser.create_command_line_parser()
     args = parser.parse_args()
@@ -71,6 +39,19 @@ def main():
         logger.error(e)
         sys.exit(1)
 
+    files_masks = None
+    if args.mask_sets:
+        args.mask_sets = args.mask_sets.split(",")
+        for mask in args.mask_sets:
+            if not misc.is_mask_set_supported(mask):
+                logger.error(
+                    f"Mask set {mask} is not supported. Supported masks are: "
+                    f"{list(consts.SUPPORTED_MASKS_SETS.keys())}"
+                )
+                sys.exit(1)
+
+        files_masks = list(itertools.chain(*[consts.SUPPORTED_MASKS_SETS[mask] for mask in args.mask_sets]))
+
     weighted_folders = weighting.weight_folders(folders)
     logger.debug(f"Weighted folders: {weighted_folders}")
 
@@ -79,10 +60,14 @@ def main():
 
     files = misc.compute_hashes_for_files(
         misc.remove_files_with_unique_size(
-            file_system.find_target_files_in_folders(
-                folders,
+            file_system.filter_files_by_masks(
+                file_system.find_files_in_folders(
+                    folders,
+                    perf_counters,
+                    recurse=args.recurse
+                ),
                 perf_counters,
-                recurse=args.recurse
+                files_masks,
             ),
             perf_counters
         ),
@@ -93,11 +78,11 @@ def main():
     to_print = "\n\t".join([str(item) for item in files])
     logger.debug(f"Files ({num_files}):\n\t{to_print}")
 
-    hash_to_files = group_files_by_hash(files)
+    hash_to_files = misc.group_files_by_hash(files)
     logger.debug(f"Hash to files: {hash_to_files}")
 
     logger.info("Removing files with unique hashes...")
-    hash_to_files = filter_out_unique_files(
+    hash_to_files = misc.filter_out_unique_files(
         hash_to_files,
         perf_counters
     )
@@ -133,9 +118,10 @@ def main():
     logger.info(
         f"Stats:\n"
         f"\tTotal files count          : {perf_counters.total_files_count}\n"
+        f"\tSkipped by mask            : {perf_counters.files_skipped_by_mask}\n"
         f"\tHashed data size           : {humanize.naturalsize(perf_counters.hashed_data_size)}\n"
         f"\tSkipped due to unique size : {perf_counters.files_skipped_due_to_unique_size}\n"
-        f"\tSkipped due to unique hash : {perf_counters.unique_files_count}\n"
+        f"\tSkipped due to unique hash : {perf_counters.files_skipped_due_to_unique_hash}\n"
         f"\tRemoved files count        : {perf_counters.removed_files_count}{dry_run_suffix}\n"
         f"\tReclaimed disk space       : {humanize.naturalsize(perf_counters.reclaimed_space)}{dry_run_suffix}\n"
     )

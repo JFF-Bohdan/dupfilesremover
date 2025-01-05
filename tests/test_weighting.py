@@ -1,6 +1,6 @@
-import pytest
-
 from dupfilesremover import data_types, weighting
+
+import pytest
 
 
 def test_weight_folders():

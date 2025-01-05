@@ -46,7 +46,11 @@ def create_command_line_parser(auto_env_var_prefix: str | None = None) -> config
         version=f"%(prog)s {__version__}"
     )
     # parser.add_argument("--masks", "-m", action="store")
-    # parser.add_argument("--masks_set_name", "-s", action="store")
+    parser.add_argument(
+        "--mask-sets",
+        "-s",
+        action="store"
+    )
     parser.add_argument(
         "folders",
         nargs="*",

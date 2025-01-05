@@ -11,7 +11,6 @@ from dupfilesremover import data_types
 from loguru import logger
 
 
-
 def get_file_creation_timestamp(path_to_file: str) -> int | float:
     """
     Try to get the date that a file was created, falling back to when it was
@@ -67,9 +66,10 @@ def remove_files(
 
 
 def filter_files_by_masks(
-        files: typing.Iterable[str],
+        files: typing.Iterable[data_types.FileInfo],
+        perf_counters: data_types.PerfCounters,
         masks: list[str] | None = None
-) -> typing.Generator[str, None, None]:
+) -> typing.Generator[data_types.FileInfo, None, None]:
     """
     Filters files by masks. Returns only files that would have a name that matches any of the masks.
 
@@ -81,11 +81,14 @@ def filter_files_by_masks(
         return
 
     for file in files:
-        if any((fnmatch.fnmatch(file, mask) for mask in masks)):
+        if any((fnmatch.fnmatch(file.file_name, mask) for mask in masks)):
             yield file
+            continue
+
+        perf_counters.files_skipped_by_mask += 1
 
 
-def find_target_files_in_folders(
+def find_files_in_folders(
         folders: list[str],
         perf_counters: data_types.PerfCounters,
         recurse: bool = False

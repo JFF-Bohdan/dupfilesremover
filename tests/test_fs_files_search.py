@@ -1,5 +1,6 @@
-from dupfilesremover import data_types, file_system
 from consts import TEST_FILES, TEST_FOLDERS
+
+from dupfilesremover import data_types, file_system
 
 
 def test_supports_non_recursive_search(tmp_path, mocker, test_files_and_folders):
@@ -31,7 +32,6 @@ def test_supports_non_recursive_search(tmp_path, mocker, test_files_and_folders)
             file_name=str(tmp_path / "folder2" / "test.txt"),
             file_size=43
         ),
-
     }
 
     found_items = set()
