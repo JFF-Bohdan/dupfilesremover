@@ -3,7 +3,7 @@ from consts import TEST_FILES, TEST_FOLDERS
 from dupfilesremover import data_types, file_system
 
 
-def test_supports_non_recursive_search(tmp_path, mocker, test_files_and_folders):
+def test_supports_non_recursive_search(tmp_path, mocker, make_test_files_and_folders):
     mocker.patch("dupfilesremover.file_system.get_file_creation_timestamp", return_value=0)
 
     expected_results = {
@@ -45,7 +45,7 @@ def test_supports_non_recursive_search(tmp_path, mocker, test_files_and_folders)
     assert expected_results == found_items
 
 
-def test_supports_recursive_search(tmp_path, mocker, test_files_and_folders):
+def test_supports_recursive_search(tmp_path, mocker, make_test_files_and_folders):
     mocker.patch("dupfilesremover.file_system.get_file_creation_timestamp", return_value=0)
 
     expected_results = {
@@ -96,7 +96,7 @@ def test_supports_recursive_search(tmp_path, mocker, test_files_and_folders):
     assert expected_results == found_items
 
 
-def test_supports_empty_folders_non_recurse(tmp_path, test_folders):
+def test_supports_empty_folders_non_recurse(tmp_path, make_test_folders_on_disk):
     # make_mandatory_folders(tmp_path)
 
     found_items = set()
@@ -110,7 +110,7 @@ def test_supports_empty_folders_non_recurse(tmp_path, test_folders):
     assert found_items == set()
 
 
-def test_supports_empty_folders_recurse(tmp_path, test_folders):
+def test_supports_empty_folders_recurse(tmp_path, make_test_folders_on_disk):
     found_items = set()
     for path in TEST_FOLDERS:
         found_items.update(
@@ -122,7 +122,7 @@ def test_supports_empty_folders_recurse(tmp_path, test_folders):
     assert found_items == set()
 
 
-def test_can_compute_hashes(tmp_path, test_files_and_folders):
+def test_can_compute_hashes(tmp_path, make_test_files_and_folders):
     expected_results = {}
     for folder, file_name, content, expected_hash, in TEST_FILES:
         file_name = str(tmp_path / folder / file_name)

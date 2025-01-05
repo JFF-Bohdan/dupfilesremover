@@ -1,16 +1,15 @@
+import os
 import pathlib
 
 from consts import TEST_FOLDERS
 
 from dupfilesremover import consts, data_types, file_system
 
-
-def convert_file_name_to_file_object(files: list[str]) -> list[data_types.FileInfo]:
-    return [data_types.FileInfo(file_name=item, file_size=1) for item in files]
+import helpers
 
 
 def test_supports_empty_filter():
-    files = convert_file_name_to_file_object(["foo.bar", "bizz.bazz", "some-image.jpeg", "some-image.jpg"])
+    files = helpers.convert_file_name_to_file_object(["foo.bar", "bizz.bazz", "some-image.jpeg", "some-image.jpg"])
 
     perf_counters = data_types.PerfCounters()
     result = list(file_system.filter_files_by_masks(files, perf_counters, None))
@@ -19,10 +18,10 @@ def test_supports_empty_filter():
 
 
 def test_filter_by_mask():
-    files = convert_file_name_to_file_object(
+    files = helpers.convert_file_name_to_file_object(
         ["foo.bar", "bizz.bazz", "some-image.jpeg", "some-image.jpg", "text-file.txt"]
     )
-    expected_result = convert_file_name_to_file_object(["some-image.jpeg", "some-image.jpg", "text-file.txt"])
+    expected_result = helpers.convert_file_name_to_file_object(["some-image.jpeg", "some-image.jpg", "text-file.txt"])
 
     perf_counters = data_types.PerfCounters()
     result = list(file_system.filter_files_by_masks(files, perf_counters, ["*.jpg", "*.jpeg", "*.txt"]))
@@ -31,10 +30,10 @@ def test_filter_by_mask():
 
 
 def test_can_filter_for_images():
-    files = convert_file_name_to_file_object(
+    files = helpers.convert_file_name_to_file_object(
         ["foo.bar", "bizz.bazz", "some-image.jpeg", "some-image.jpg", "text-file.txt"]
     )
-    expected_result = convert_file_name_to_file_object(["some-image.jpeg", "some-image.jpg"])
+    expected_result = helpers.convert_file_name_to_file_object(["some-image.jpeg", "some-image.jpg"])
 
     perf_counters = data_types.PerfCounters()
     result = list(file_system.filter_files_by_masks(files, perf_counters, consts.IMAGES))
@@ -42,7 +41,7 @@ def test_can_filter_for_images():
     assert perf_counters.files_skipped_by_mask == 3
 
 
-def test_can_find_files_in_list_of_folders(tmp_path, test_files_and_folders, mocker):
+def test_can_find_files_in_list_of_folders(tmp_path, make_test_files_and_folders, mocker):
     mocker.patch("dupfilesremover.file_system.get_file_creation_timestamp", return_value=0)
 
     perf_counters = data_types.PerfCounters()
@@ -91,3 +90,146 @@ def test_can_find_files_in_list_of_folders(tmp_path, test_files_and_folders, moc
 
     assert result == expected_results
     assert perf_counters.total_files_count == len(expected_results)
+
+
+def test_will_skip_deletion_of_files_in_dry_run_mocked(
+    make_test_files_and_folders,
+    path_objects_of_test_files,
+    mocker,
+):
+    mocked_os_remove = mocker.patch("os.remove")
+
+    perf_counters = data_types.PerfCounters()
+
+    file_info_list = helpers.convert_path_objects_into_file_object(path_objects_of_test_files)
+    expected_reclaimed_space = sum(item.file_size for item in file_info_list)
+
+    file_system.remove_files(
+        files=file_info_list,
+        perf_counters=perf_counters,
+        dry_run=True
+    )
+
+    # assert all(file.exists() for file in path_objects_of_test_files)
+    assert perf_counters.removed_files_count == len(file_info_list)
+    assert perf_counters.reclaimed_space == expected_reclaimed_space
+    mocked_os_remove.assert_not_called()
+
+
+def test_remove_required_files_mocked(
+    make_test_files_and_folders,
+    path_objects_of_test_files,
+    mocker,
+):
+    mocked_os_remove = mocker.patch("os.remove")
+    perf_counters = data_types.PerfCounters()
+
+    files_to_delete = helpers.convert_path_objects_into_file_object(
+        [item for index, item in enumerate(path_objects_of_test_files) if index % 2 == 1]
+    )
+    expected_reclaimed_space = sum(item.file_size for item in files_to_delete)
+    expected_calls = [
+        mocker.call(item.file_name) for item in files_to_delete
+    ]
+
+    files_to_keep = helpers.convert_path_objects_into_file_object(
+        [item for index, item in enumerate(path_objects_of_test_files) if index % 2 == 0]
+    )
+
+    assert set(files_to_keep) & set(files_to_delete) == set()
+
+    file_system.remove_files(
+        files=files_to_delete,
+        perf_counters=perf_counters,
+        dry_run=False
+    )
+
+    # assert all(os.path.exists(file.file_name) for file in files_to_keep)
+    # assert all(not os.path.exists(file.file_name) for file in files_to_delete)
+
+    assert perf_counters.removed_files_count == len(files_to_delete)
+    assert perf_counters.reclaimed_space == expected_reclaimed_space
+    mocked_os_remove.assert_has_calls(
+        expected_calls,
+    )
+
+
+def test_remove_required_files_non_mocked(
+    make_test_files_and_folders,
+    path_objects_of_test_files,
+):
+    perf_counters = data_types.PerfCounters()
+
+    files_to_delete = helpers.convert_path_objects_into_file_object(
+        [item for index, item in enumerate(path_objects_of_test_files) if index % 2 == 1]
+    )
+    expected_reclaimed_space = sum(item.file_size for item in files_to_delete)
+
+    files_to_keep = helpers.convert_path_objects_into_file_object(
+        [item for index, item in enumerate(path_objects_of_test_files) if index % 2 == 0]
+    )
+
+    assert set(files_to_keep) & set(files_to_delete) == set()
+
+    file_system.remove_files(
+        files=files_to_delete,
+        perf_counters=perf_counters,
+        dry_run=False
+    )
+
+    assert all(os.path.exists(file.file_name) for file in files_to_keep)
+    assert all(not os.path.exists(file.file_name) for file in files_to_delete)
+    assert perf_counters.removed_files_count == len(files_to_delete)
+    assert perf_counters.reclaimed_space == expected_reclaimed_space
+
+
+def test_can_get_file_creation_on_windows(
+    make_test_folders_on_disk,
+    file_info_for_test_files,
+    mocker
+):
+    files = file_info_for_test_files
+    assert files
+
+    mocker.patch("platform.system", return_value="Windows")
+    mocker.patch("os.path.getctime", return_value=42)
+    result = file_system.get_file_creation_timestamp(files[0].file_name)
+    assert result == 42
+
+
+def test_can_get_file_creation_on_linux_new_python(
+    make_test_folders_on_disk,
+    file_info_for_test_files,
+    mocker
+):
+    files = file_info_for_test_files
+    assert files
+
+    mocked_stat = mocker.MagicMock()
+    mocked_stat.st_birthtime = 123
+
+    mocker.patch("platform.system", return_value="Linux")
+    mocker.patch("os.stat", return_value=mocked_stat)
+    result = file_system.get_file_creation_timestamp(files[0].file_name)
+    assert result == 123
+    mocked_stat.st_mtime.assert_not_called()
+
+
+def test_can_get_file_creation_on_linux_old_python(
+    make_test_folders_on_disk,
+    file_info_for_test_files,
+    mocker
+):
+    files = file_info_for_test_files
+    assert files
+
+    mocked_stat = mocker.Mock(spec=[])
+    no_attribute = mocker.PropertyMock(side_effect=AttributeError())
+    type(mocked_stat).st_birthtime = no_attribute
+    type(mocked_stat).st_mtime = mocker.PropertyMock(return_value=321)
+
+    mocker.patch("platform.system", return_value="Linux")
+    mocker.patch("os.stat", return_value=mocked_stat)
+
+    result = file_system.get_file_creation_timestamp(files[0].file_name)
+    assert result == 321

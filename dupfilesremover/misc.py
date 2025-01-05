@@ -1,5 +1,6 @@
 import collections
 import os
+import pathlib
 import typing
 
 from dupfilesremover import consts, data_types, exceptions, file_system, tqdm_to_logger
@@ -19,13 +20,14 @@ def is_folder_exists(path: str) -> bool:
 
 def validate_folders(folders: list[str]) -> None:
     for path in folders:
-        if not is_folder_exists(path):
-            raise exceptions.FolderDoesNotExistsError(f"Folder {path} does not exists")
+        if is_folder_exists(path):
+            continue
+
+        raise exceptions.FolderDoesNotExistsError(f"Folder {path} does not exists")
 
 
 def normalize_folders(folders: list[str]) -> list[str]:
-    # replace("\\", "/")
-    return [os.path.abspath(os.path.normpath(path)) for path in folders]
+    return [str(pathlib.Path(path).resolve()) for path in folders]
 
 
 def remove_files_with_unique_size(
