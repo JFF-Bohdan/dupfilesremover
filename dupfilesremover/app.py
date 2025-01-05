@@ -1,28 +1,15 @@
-import collections
-import datetime
-import os.path
+import datetime as dt
 import sys
 import time
-import datetime as dt
+
+from dupfilesremover import command_line_parser, consts, data_types, exceptions, file_system, misc, weighting
 
 import humanize
 
 from loguru import logger
 
 
-from dupfilesremover import command_line_parser
-
-from dupfilesremover import consts, misc, exceptions, file_system, data_types, weighting
-
-
-import dataclasses
-import pathlib
-import typing
-
-import itertools
-
-
-def main():
+def main(args: list[str] | None = None):
     timestamp_begin = time.monotonic()
     perf_counters = data_types.PerfCounters()
 
@@ -30,7 +17,7 @@ def main():
     logger.add(sys.stdout, format="{time} {level} {message}", level="DEBUG")
 
     parser = command_line_parser.create_command_line_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     folders = misc.normalize_folders(args.folders)
     try:
@@ -39,18 +26,14 @@ def main():
         logger.error(e)
         sys.exit(1)
 
-    files_masks = None
-    if args.mask_sets:
-        args.mask_sets = args.mask_sets.split(",")
-        for mask in args.mask_sets:
-            if not misc.is_mask_set_supported(mask):
-                logger.error(
-                    f"Mask set {mask} is not supported. Supported masks are: "
-                    f"{list(consts.SUPPORTED_MASKS_SETS.keys())}"
-                )
-                sys.exit(1)
-
-        files_masks = list(itertools.chain(*[consts.SUPPORTED_MASKS_SETS[mask] for mask in args.mask_sets]))
+    try:
+        files_masks = misc.get_flat_masks(args.mask_sets) if args.mask_sets else None
+    except exceptions.FileMaskIsNotSupportedError as e:
+        logger.error(
+            f"Mask set {e.mask} is not supported. Supported masks are: "
+            f"{list(consts.SUPPORTED_MASKS_SETS.keys())}"
+        )
+        sys.exit(1)
 
     weighted_folders = weighting.weight_folders(folders)
     logger.debug(f"Weighted folders: {weighted_folders}")
@@ -92,16 +75,15 @@ def main():
     logger.debug(f"hash_to_files = {hash_to_files}")
 
     for key, files in hash_to_files.items():
-        if len(files) <= 1:
+        if len(files) <= 1:  # pragma: no cover
             raise RuntimeError("Error during attempt to delete files")
 
         logger.info(f"For hash {key}")
 
-        file_to_save = files[0]  # .file_name
-        files_to_delete = files[1:]  # [file.file_name for file in files[1:]]
+        file_to_save = files[0]
+        files_to_delete = files[1:]
 
         logger.info(f"File to keep: {file_to_save.file_name}")
-        # logger.info(f"Files to remove: {files_to_delete}")
 
         file_system.remove_files(
             files=files_to_delete,

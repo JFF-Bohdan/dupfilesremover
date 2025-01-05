@@ -1,13 +1,13 @@
 import collections
 import pathlib
 
-import pytest
+import consts as test_consts
+
+from dupfilesremover import consts, data_types, exceptions, misc
 
 import helpers
 
-import consts
-
-from dupfilesremover import data_types, exceptions, misc
+import pytest
 
 
 def test_can_group_files_by_hash():
@@ -182,14 +182,14 @@ def test_can_detect_unsupported_mask():
 
 
 def test_can_check_if_folder_exists(tmp_path, make_test_folders_on_disk):
-    for folder in consts.TEST_FOLDERS:
+    for folder in test_consts.TEST_FOLDERS:
         assert misc.is_folder_exists(tmp_path / folder) is True
 
     assert misc.is_folder_exists("does_not_exists") is False
 
 
 def test_can_validate_folders(tmp_path, make_test_folders_on_disk):
-    folders = [str((tmp_path / folder).resolve()) for folder in consts.TEST_FOLDERS]
+    folders = [str((tmp_path / folder).resolve()) for folder in test_consts.TEST_FOLDERS]
     misc.validate_folders(folders)
 
 
@@ -199,7 +199,20 @@ def test_raises_exception_when_validating_folder_that_doesnt_exists():
 
 
 def test_can_normalize_folders(tmp_path, make_test_folders_on_disk):
-    folders = [str(pathlib.Path(folder).resolve()) for folder in consts.TEST_FOLDERS]
+    folders = [str(pathlib.Path(folder).resolve()) for folder in test_consts.TEST_FOLDERS]
     result = misc.normalize_folders(folders)
 
     assert result == folders
+
+
+def test_can_flatten_images_mask():
+    result = misc.get_flat_masks("images")
+    expected_result = consts.IMAGES
+
+    assert result == expected_result
+
+
+def test_raises_exception_on_unknown_images_mask():
+    with pytest.raises(exceptions.FileMaskIsNotSupportedError) as e:
+        misc.get_flat_masks("does_not_exists")
+        assert e.mask == "does_not_exists"

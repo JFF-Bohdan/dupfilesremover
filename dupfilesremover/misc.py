@@ -1,4 +1,5 @@
 import collections
+import itertools
 import os
 import pathlib
 import typing
@@ -8,6 +9,15 @@ from dupfilesremover import consts, data_types, exceptions, file_system, tqdm_to
 from loguru import logger
 
 import tqdm
+
+
+def get_flat_masks(mask_sets: str) -> list[str]:
+    mask_sets = list(set(item.strip() for item in mask_sets.split(",") if item.strip()))
+    for mask in mask_sets:
+        if not is_mask_set_supported(mask):
+            raise exceptions.FileMaskIsNotSupportedError(mask)
+
+    return list(itertools.chain(*[consts.SUPPORTED_MASKS_SETS[mask] for mask in mask_sets]))
 
 
 def is_mask_set_supported(mask_set_name: str) -> bool:

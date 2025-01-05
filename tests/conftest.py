@@ -2,9 +2,9 @@ import pathlib
 
 from consts import TEST_FILES, TEST_FOLDERS
 
-import pytest
-
 from dupfilesremover import data_types
+
+import pytest
 
 
 @pytest.fixture
