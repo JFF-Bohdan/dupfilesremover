@@ -65,10 +65,10 @@ tasks:
 
   build-package:
     desc: Runs tests and other checks and then builds package
-    deps: [flake8, mypy, coverage, validate-package]
+    deps: [all-tests, validate-package]
     cmds:
       - $PYTHON setup.py sdist
-      - echo "Build successfull"
+      - echo "Build successfully"
       
   local-install:
     desc: Installs package

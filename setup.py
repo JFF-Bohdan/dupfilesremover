@@ -43,7 +43,9 @@ def load_file_content(file_name, encoding="utf-8") -> str:
 requirements = parse_requirements("requirements.txt")
 
 extra_requirements = copy.deepcopy(requirements)
-extra_requirements.extend(parse_requirements("requirements-dev.txt"))
+
+if os.path.exists("requirements-dev.txt"):
+    extra_requirements.extend(parse_requirements("requirements-dev.txt"))
 
 
 setup(
@@ -56,7 +58,7 @@ setup(
     keywords=["duplicates file remover", "duplicate images remover", "dups remover"],
     url="https://github.com/JFF-Bohdan/dupfilesremover",
     platforms="all",
-    python_requires=">=3.6",
+    python_requires=">=3.10",
     packages=find_packages(exclude=["tests"]),
     install_requires=requirements,
     extras_require={"dev": extra_requirements},
