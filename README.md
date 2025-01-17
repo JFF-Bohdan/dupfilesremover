@@ -60,63 +60,17 @@ python setup.py install
 
 ## Usage
 
-TODO: add examples of command line
+You can use tool like:
 
-### Masks for files
-
-You may configure masks that will be used for file name matching. For example,
-if you want to remove files only matching `*.jpg` and `*.jpeg` you may this command:
-
-```
-python -m dupfilesremover -m *.jpg,*.jpeg --recurse .\data1 .\data2 .\data3
+```shell
+dupfilesremover --recurse tmp/folder1 tmp/folder2 tmp/folder3
 ```
 
-### Predefined masks for filenames
+In this example we are going to analyse folders `tmp/folder1`, `tmp/folder2` and `tmp/folder3` 
+for duplicate files and remove them.
 
-You may use configuration file with sets of predefined masks for files, for example:
+If you would like to perform dry-run (no action files removal, just analysis), you can use:
 
-```
-python -m dupfilesremover -s images --recurse .\data1 .\data2 .\data3
-```
-
-This command will remove files that matches set `images` in default
-configuration files, provided with package.
-
-Set `images` contains extensions assumed to match images:
-
-```
-['*.jpeg', '*.jfif', '*.jpg', '*.jp2', '*.j2k', '*.jpf', '*.jpx',
-'*.jpm', '*.mj2', '*.tiff', '*.tif', '*.gif', '*.bmp', '*.png',
-'*.ppm', '*.pgm', '*.pbm', '*.pnm', '*.webp', '*.heif', '*.heic',
-'*.bpg', '*.drw', '*.ecw', '*.fits', '*.fit', '*.fts', '*.flif',
-'*.ico', '*.iff', '*.lbm', '*.img', '*.jxr', '*.hdp', '*.wdp',
-'*.liff', '*.nrrd', '*.pam', '*.pcx', '*.pgf', '*.plbm', '*.sgi',
-'*.sid', '*.ras', '*.sun', '*.tga', '*.icb', '*.vda', '*.vst',
-'*.xisf', '*.cd5', '*.cpt', '*.psd', '*.psp', '*.xcf', '*.pdn']
-```
-
-You may create your own configuration file and define your own sets. In
-this case you will be required to provide configuration file name
-in command line:
-
-```
-python -m dupfilesremover -c ./config/config.ini -s images --recurse .\data1 .\data2 .\data3
-```
-
-In your configuration file you may specify named set for matching masks.
-To do this you need create `.ini` file with section `predefined_masks`.
-In this section you may create key which will be name for named set and
-then add masks as value for this key, separating masks by comma.
-Multiline values also supported in case if they will be intended.
-
-```
-[predefined_masks]
-data_files = *.data,*.dat
-images =
-    *.jpeg,
-    *.jfif,
-    *.jpg,
-    *.jp2,
-    *.j2k,
-    *.jpf
+```shell
+dupfilesremover --dry-run --recurse tmp/folder1 tmp/folder2 tmp/folder3
 ```
