@@ -22,7 +22,7 @@ jobs:
         continue-on-error: true
       - name: Test with pytest
         run: |
-          coverage run -m pytest  -v -s
+          python -m pytest ./tests -vvv --cov=dupfilesremover
       - name: Generate Coverage Report
         run: |
-          coverage report -m
+          python -m coverage html
