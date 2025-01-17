@@ -6,7 +6,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                python-version: ["3.10"]
+                python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         steps:
             - uses: actions/checkout@v3
             - name: 'Set up Python ${{ matrix.python-version }}'
@@ -30,3 +30,6 @@ jobs:
             - name: Generate Coverage Report
               run: |
                   python -m coverage report
+            - name: Check package
+              run: |
+                  python setup.py check 
