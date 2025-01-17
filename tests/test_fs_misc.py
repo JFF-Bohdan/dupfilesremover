@@ -1,7 +1,8 @@
+import hashlib
 import os
 import pathlib
 
-from consts import TEST_FOLDERS
+import consts as test_consts
 
 from dupfilesremover import consts, data_types, file_system
 
@@ -46,7 +47,7 @@ def test_can_find_files_in_list_of_folders(tmp_path, make_test_files_and_folders
 
     perf_counters = data_types.PerfCounters()
     result = file_system.find_files_in_folders(
-        folders=[str(pathlib.Path(tmp_path) / folder) for folder in TEST_FOLDERS],
+        folders=[str(pathlib.Path(tmp_path) / folder) for folder in test_consts.TEST_FOLDERS],
         perf_counters=perf_counters,
         recurse=True,
     )
@@ -233,3 +234,65 @@ def test_can_get_file_creation_on_linux_old_python(
 
     result = file_system.get_file_creation_timestamp(files[0].file_name)
     assert result == 321
+
+
+def test_can_read_file_in_chunks(tmp_path, make_test_files_and_folders):
+    with open(tmp_path / "folder1/dot-test.txt", "rb") as input_file:
+        result = list(file_system.read_file_in_chunks(input_file, 10))
+
+    result = [chunk.decode("utf-8") for chunk in result]
+    expected_result = [
+        "The quick ",
+        "brown fox ",
+        "jumps over",
+        " the lazy ",
+        "dog.",
+    ]
+    assert result == expected_result
+    assert "".join(result) == "The quick brown fox jumps over the lazy dog."
+
+
+def test_can_compute_hashes(tmp_path, make_test_files_and_folders):
+    found_items = set()
+    for path in test_consts.TEST_FOLDERS:
+        found_items.update(
+            list(
+                file_system.list_files(str(tmp_path / path), recurse=True)
+            )
+        )
+
+    computed_results = {}
+    for item in found_items:
+        hash = file_system.hash_file(item.file_name)
+        computed_results[item.file_name] = hash
+
+    expected_results = {}
+    for folder, file_name, content, expected_hash, in test_consts.TEST_FILES:
+        file_name = str(tmp_path / folder / file_name)
+        expected_results[file_name] = expected_hash
+
+    assert expected_results == computed_results
+
+
+def test_can_compute_hashes_no_build_in_file_hasher(tmp_path, make_test_files_and_folders, monkeypatch):
+    monkeypatch.delattr(hashlib, "file_digest")
+
+    found_items = set()
+    for path in test_consts.TEST_FOLDERS:
+        found_items.update(
+            list(
+                file_system.list_files(str(tmp_path / path), recurse=True)
+            )
+        )
+
+    computed_results = {}
+    for item in found_items:
+        hash = file_system.hash_file(item.file_name)
+        computed_results[item.file_name] = hash
+
+    expected_results = {}
+    for folder, file_name, content, expected_hash, in test_consts.TEST_FILES:
+        file_name = str(tmp_path / folder / file_name)
+        expected_results[file_name] = expected_hash
+
+    assert expected_results == computed_results

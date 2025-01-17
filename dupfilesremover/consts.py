@@ -1,3 +1,6 @@
+FILE_READ_BUFFER = 64 * 1024
+
+
 IMAGES = [
     "*.jpeg",
     "*.jfif",

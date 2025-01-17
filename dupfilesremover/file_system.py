@@ -1,4 +1,5 @@
 import fnmatch
+import functools
 import hashlib
 import itertools
 import os
@@ -6,7 +7,7 @@ import pathlib
 import platform
 import typing
 
-from dupfilesremover import data_types
+from dupfilesremover import consts, data_types
 
 from loguru import logger
 
@@ -45,9 +46,37 @@ def list_files(path: str, recurse: bool = False) -> typing.Generator[data_types.
         )
 
 
-def hash_file(file_name: str) -> str:
+def read_file_in_chunks(
+        file_object: typing.BinaryIO,
+        buffer_size: int = consts.FILE_READ_BUFFER
+) -> typing.Generator[bytes, None, None]:
+    chunker = functools.partial(file_object.read, buffer_size)
+    for chunk in iter(chunker, b""):
+        yield chunk
+
+
+def file_digest(
+    file_object: typing.BinaryIO,
+    hash_name: str,
+    buffer_size: int = consts.FILE_READ_BUFFER,
+) -> str:
+    hash = hashlib.new(hash_name)
+    for chunk in read_file_in_chunks(file_object, buffer_size):
+        hash.update(chunk)
+
+    return hash.hexdigest()
+
+
+def hash_file(
+    file_name: str,
+    hash_name: str = "sha3_256",
+    buffer_size: int = consts.FILE_READ_BUFFER,
+) -> str:
     with open(file_name, "rb", buffering=0) as input_file:
-        return hashlib.file_digest(input_file, "sha3_256").hexdigest()
+        if hasattr(hashlib, "file_digest"):
+            return hashlib.file_digest(input_file, hash_name).hexdigest()
+
+        return file_digest(file_object=input_file, hash_name=hash_name, buffer_size=buffer_size)
 
 
 def remove_files(
@@ -99,5 +128,3 @@ def find_files_in_folders(
     for item in itertools.chain(*[list_files(path, recurse=recurse) for path in folders]):
         perf_counters.total_files_count += 1
         yield item
-    # for path in folders:
-    #     yield from file_system.list_files(path, recurse=recurse)
