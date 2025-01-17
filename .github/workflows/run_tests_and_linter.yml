@@ -52,11 +52,15 @@ jobs:
               run: |
                   # NOTE: put your own distribution build steps here.
                   python -m pip install --upgrade pip
-                  pip install -r requirements.txt
+                  pip install -r requirements-dev.txt
 
             - name: Check package
               run: |
-                  python setup.py check 
+                  python setup.py check
+
+            - name: Build package
+              run: |
+                  python setup.py sdist 
 
             - name: Upload distributions
               uses: actions/upload-artifact@v4
