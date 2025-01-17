@@ -73,7 +73,7 @@ def hash_file(
     buffer_size: int = consts.FILE_READ_BUFFER,
 ) -> str:
     with open(file_name, "rb", buffering=0) as input_file:
-        if hasattr(hashlib, "file_digest"):
+        if hasattr(hashlib, "file_digest"):  # pragma: no cover
             return hashlib.file_digest(input_file, hash_name).hexdigest()
 
         return file_digest(file_object=input_file, hash_name=hash_name, buffer_size=buffer_size)
