@@ -64,12 +64,9 @@ def main(command_line_args: list[str] | None = None):
     to_print = "\n\t".join([str(item) for item in files])
     logger.debug(f"Files ({num_files}):\n\t{to_print}")
 
-    hash_to_files = misc.group_files_by_hash(files)
-    logger.debug(f"Hash to files: {hash_to_files}")
-
     logger.info("Removing files with unique hashes...")
     hash_to_files = misc.filter_out_unique_files(
-        hash_to_files,
+        misc.group_files_by_hash(files),
         perf_counters
     )
 

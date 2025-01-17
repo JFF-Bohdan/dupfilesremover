@@ -23,7 +23,7 @@ def get_file_creation_timestamp(path_to_file: str) -> int | float:
 
     stat = os.stat(path_to_file)
     try:
-        return stat.st_birthtime
+        return stat.st_birthtime  # type: ignore
     except AttributeError:
         # We're probably on Linux. No easy way to get creation dates here,
         # so we'll settle for when its content was last modified.

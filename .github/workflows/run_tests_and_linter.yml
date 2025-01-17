@@ -21,9 +21,12 @@ jobs:
             - name: Run Flake8
               run: |
                   python -m flake8
+            - name: Run MyPy
+              run: |
+                  python -m mypy dupfilesremover
             - name: Test with pytest
               run: |
                   python -m pytest ./tests -vvv --cov=dupfilesremover
             - name: Generate Coverage Report
               run: |
-                  python -m coverage html
+                  python -m coverage report
