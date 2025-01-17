@@ -17,13 +17,10 @@ jobs:
               run: >
                   python -m pip install --upgrade pip
                   if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-              continue-on-error: true
-            - name: Show installed modules
-              run: |
-                  python -m pip freeze
+              continue-on-error: false
             - name: Run Flake8
               run: |
-                  python -m Flake8
+                  python -m flake8
             - name: Test with pytest
               run: |
                   python -m pytest ./tests -vvv --cov=dupfilesremover
