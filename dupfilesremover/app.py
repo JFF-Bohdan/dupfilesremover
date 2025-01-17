@@ -9,7 +9,7 @@ import humanize
 from loguru import logger
 
 
-def main(args: list[str] | None = None):
+def main(command_line_args: list[str] | None = None):
     timestamp_begin = time.monotonic()
     perf_counters = data_types.PerfCounters()
 
@@ -17,7 +17,7 @@ def main(args: list[str] | None = None):
     logger.add(sys.stdout, format="{time} {level} {message}", level="DEBUG")
 
     parser = command_line_parser.create_command_line_parser()
-    args = parser.parse_args(args)
+    args = parser.parse_args(command_line_args)
 
     folders = misc.normalize_folders(args.folders)
     try:
@@ -41,7 +41,7 @@ def main(args: list[str] | None = None):
     debug_message = "\n\t".join(folders)
     logger.info(f"Folders to process:\n\t{debug_message}")
 
-    files = misc.compute_hashes_for_files(
+    gen_files = misc.compute_hashes_for_files(
         misc.remove_files_with_unique_size(
             file_system.filter_files_by_masks(
                 file_system.find_files_in_folders(
@@ -56,7 +56,7 @@ def main(args: list[str] | None = None):
         ),
         perf_counters
     )
-    files = list(files)
+    files = list(gen_files)
     num_files = len(files)
     to_print = "\n\t".join([str(item) for item in files])
     logger.debug(f"Files ({num_files}):\n\t{to_print}")

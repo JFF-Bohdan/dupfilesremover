@@ -17,11 +17,11 @@ def calculate_votes_for_files(
 ) -> list[data_types.FileInfo]:
     result = []
 
-    weighted_folders = {pathlib.Path(key): value for key, value in weighted_folders.items()}
+    pathlib_weighted_folders = {pathlib.Path(key): value for key, value in weighted_folders.items()}
     for file in files:
         path_object = pathlib.Path(file.file_name)
         matched_prefix_info = first.first(
-            weighted_folders.items(),
+            pathlib_weighted_folders.items(),
             key=lambda weight_data: weight_data[0] in path_object.parents
         )
 
@@ -39,7 +39,7 @@ def calculate_votes_for_files(
                 creation_timestamp=file.creation_timestamp,
                 hash=file.hash,
                 vote=votes,
-                folder_prefix=folder_prefix,
+                folder_prefix=str(folder_prefix),
             )
         )
 

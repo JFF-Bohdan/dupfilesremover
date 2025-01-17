@@ -7,7 +7,7 @@ class FileInfo:
     file_size: int
     creation_timestamp: int | float = 0
     hash: str = ""
-    vote: tuple[int, ...] = ()
+    vote: tuple[int | float, ...] = ()
     folder_prefix: str = ""
 
 

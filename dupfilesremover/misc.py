@@ -11,8 +11,8 @@ from loguru import logger
 import tqdm
 
 
-def get_flat_masks(mask_sets: str) -> list[str]:
-    mask_sets = list(set(item.strip() for item in mask_sets.split(",") if item.strip()))
+def get_flat_masks(mask: str) -> list[str]:
+    mask_sets = list(set(item.strip() for item in mask.split(",") if item.strip()))
     for mask in mask_sets:
         if not is_mask_set_supported(mask):
             raise exceptions.FileMaskIsNotSupportedError(mask)
@@ -45,7 +45,7 @@ def remove_files_with_unique_size(
         perf_counters: data_types.PerfCounters
 ) -> typing.Generator[data_types.FileInfo, None, None]:
     temp_buffer: collections.defaultdict[int, list[data_types.FileInfo]] = collections.defaultdict(list)
-    times_seen: collections.Counter[int, int] = collections.Counter()
+    times_seen: collections.Counter[int] = collections.Counter()
 
     for file in files:
         times_seen.update({file.file_size: 1})
