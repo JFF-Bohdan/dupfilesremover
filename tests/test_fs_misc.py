@@ -275,7 +275,11 @@ def test_can_compute_hashes(tmp_path, make_test_files_and_folders):
 
 
 def test_can_compute_hashes_no_build_in_file_hasher(tmp_path, make_test_files_and_folders, monkeypatch):
-    monkeypatch.delattr(hashlib, "file_digest")
+    # If we are running on a newer version of Python and there is a function `hashlib.file_digest`
+    # we would like to test how our logic would behave in case if there would be an older version of Python
+    # without such function. That's why we would like to delete this function and check that our logic would adapt.
+    if hasattr(hashlib, "file_digest"):
+        monkeypatch.delattr(hashlib, "file_digest")
 
     found_items = set()
     for path in test_consts.TEST_FOLDERS:
