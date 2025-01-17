@@ -16,6 +16,7 @@ class PerfCounters:
     total_files_count: int = 0
     files_skipped_due_to_unique_size: int = 0
     files_skipped_by_mask: int = 0
+    files_skipped_by_duplicate_name: int = 0
     hashed_data_size: int = 0
     files_skipped_due_to_unique_hash: int = 0
     removed_files_count: int = 0

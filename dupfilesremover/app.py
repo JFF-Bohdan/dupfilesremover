@@ -42,15 +42,18 @@ def main(command_line_args: list[str] | None = None):
     logger.info(f"Folders to process:\n\t{debug_message}")
 
     gen_files = misc.compute_hashes_for_files(
-        misc.remove_files_with_unique_size(
-            file_system.filter_files_by_masks(
-                file_system.find_files_in_folders(
-                    folders,
+        misc.remove_duplicate_file_names(
+            misc.remove_files_with_unique_size(
+                file_system.filter_files_by_masks(
+                    file_system.find_files_in_folders(
+                        folders,
+                        perf_counters,
+                        recurse=args.recurse
+                    ),
                     perf_counters,
-                    recurse=args.recurse
+                    files_masks,
                 ),
-                perf_counters,
-                files_masks,
+                perf_counters
             ),
             perf_counters
         ),
@@ -99,12 +102,13 @@ def main(command_line_args: list[str] | None = None):
     dry_run_suffix = " [DRY RUN - no action performed]" if args.dry_run else ""
     logger.info(
         f"Stats:\n"
-        f"\tTotal files count          : {perf_counters.total_files_count}\n"
-        f"\tSkipped by mask            : {perf_counters.files_skipped_by_mask}\n"
-        f"\tHashed data size           : {humanize.naturalsize(perf_counters.hashed_data_size)}\n"
-        f"\tSkipped due to unique size : {perf_counters.files_skipped_due_to_unique_size}\n"
-        f"\tSkipped due to unique hash : {perf_counters.files_skipped_due_to_unique_hash}\n"
-        f"\tRemoved files count        : {perf_counters.removed_files_count}{dry_run_suffix}\n"
-        f"\tReclaimed disk space       : {humanize.naturalsize(perf_counters.reclaimed_space)}{dry_run_suffix}\n"
+        f"\tTotal files count             : {perf_counters.total_files_count}\n"
+        f"\tSkipped by mask               : {perf_counters.files_skipped_by_mask}\n"
+        f"\tHashed data size              : {humanize.naturalsize(perf_counters.hashed_data_size)}\n"
+        f"\tSkipped due to unique size    : {perf_counters.files_skipped_due_to_unique_size}\n"
+        f"\tSkipped due to duplicate name : {perf_counters.files_skipped_by_duplicate_name}\n"
+        f"\tSkipped due to unique hash    : {perf_counters.files_skipped_due_to_unique_hash}\n"
+        f"\tRemoved files count           : {perf_counters.removed_files_count}{dry_run_suffix}\n"
+        f"\tReclaimed disk space          : {humanize.naturalsize(perf_counters.reclaimed_space)}{dry_run_suffix}\n"
     )
     logger.info(f"App finished @ {human_readable_interval}")

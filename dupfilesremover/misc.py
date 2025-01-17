@@ -72,6 +72,10 @@ def compute_hashes_for_files(
     files: typing.Iterable[data_types.FileInfo],
     perf_counters: data_types.PerfCounters,
 ) -> typing.Generator[data_types.FileInfo, None, None]:
+    """
+    Computes hash for all provided files
+    """
+
     logger.info("Computing hashes...")
     # We need to materialize list to be able to show progress bar
     files = list(files)
@@ -130,4 +134,27 @@ def filter_out_unique_files(
 
         result[key] = hash_to_files[key]
 
+    return result
+
+
+def remove_duplicate_file_names(
+        files: typing.Iterable[data_types.FileInfo],
+        perf_counters: data_types.PerfCounters,
+) -> list[data_types.FileInfo]:
+    """
+    Removes files with duplicate files names. In case if we have same file referenced
+    multiple times only one reference will be preserved in the result.
+    """
+    files_list = list(files)
+
+    seen_file_names = set()
+    result = []
+    for file in files_list:
+        if file.file_name in seen_file_names:
+            continue
+
+        seen_file_names.add(file.file_name)
+        result.append(file)
+
+    perf_counters.files_skipped_by_duplicate_name = len(files_list) - len(result)
     return result

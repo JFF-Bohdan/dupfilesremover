@@ -1,13 +1,11 @@
 import io
 import logging
 
-# from loguru import logger
-
 
 class TqdmToLogger(io.StringIO):
     """
-        Output stream for TQDM which will output to logger module instead of
-        the StdOut.
+    Output stream for TQDM which will output to logger module instead of
+    the StdOut.
     """
 
     def __init__(self, logger, level=logging.INFO):

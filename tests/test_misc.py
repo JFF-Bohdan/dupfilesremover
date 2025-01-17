@@ -216,3 +216,51 @@ def test_raises_exception_on_unknown_images_mask():
     with pytest.raises(exceptions.FileMaskIsNotSupportedError) as e:
         misc.get_flat_masks("does_not_exists")
         assert e.mask == "does_not_exists"
+
+
+def test_removes_files_with_duplicate_names():
+    test_data = [
+        data_types.FileInfo(
+            file_name="test-1",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-2",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-1",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-1",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-3",
+            file_size=123,
+        ),
+    ]
+
+    perf_counters = data_types.PerfCounters()
+    result = misc.remove_duplicate_file_names(
+        files=test_data,
+        perf_counters=perf_counters,
+    )
+
+    expected_result = [
+        data_types.FileInfo(
+            file_name="test-1",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-2",
+            file_size=123,
+        ),
+        data_types.FileInfo(
+            file_name="test-3",
+            file_size=123,
+        ),
+    ]
+    assert result == expected_result
+    assert perf_counters.files_skipped_by_duplicate_name == 2

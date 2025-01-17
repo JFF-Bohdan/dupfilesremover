@@ -1,5 +1,10 @@
 TEST_FOLDERS = ["folder1", "folder2", "folder3"]
 
+# TEST_ORDERBASIC = 1
+# TEST_END_TO_END_MOCKED = 10
+# TEST_END_TO_END_ACTIVE = 50
+
+
 TEST_FILES = [
     (
         "folder1",
