@@ -13,11 +13,12 @@ def main(command_line_args: list[str] | None = None):
     timestamp_begin = time.monotonic()
     perf_counters = data_types.PerfCounters()
 
-    logger.remove()
-    logger.add(sys.stdout, format="{time} {level} {message}", level="DEBUG")
-
     parser = command_line_parser.create_command_line_parser()
     args = parser.parse_args(command_line_args)
+
+    logger.remove()
+    log_level = "DEBUG" if args.verbose else "INFO"
+    logger.add(sys.stdout, format="{time} {level} {message}", level=log_level)
 
     folders = misc.normalize_folders(args.folders)
     try:

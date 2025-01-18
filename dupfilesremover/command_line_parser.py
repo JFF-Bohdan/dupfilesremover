@@ -30,6 +30,12 @@ def create_command_line_parser(auto_env_var_prefix: str | None = None) -> config
              "Will just print list of files to be deleted on the console"
     )
     parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Verbose mode, will print debug messages on the console"
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="version",
